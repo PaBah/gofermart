@@ -1,0 +1,14 @@
+openapi: 3.0.0
+info:
+  version: 0.3.0
+  title: Gofermart cumulative loyalty system API
+  description: A sample API of service which accumulate bonuses
+servers:
+  - url: http://localhost:8080
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: Authorization
+paths:
