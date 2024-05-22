@@ -56,7 +56,7 @@ func (ds *DBStorage) CreateUser(ctx context.Context, user models.User) (createdU
 		err = ErrAlreadyExists
 	}
 
-	return
+	return ds.AuthorizeUser(ctx, user.Login)
 }
 
 func (ds *DBStorage) AuthorizeUser(ctx context.Context, login string) (user models.User, err error) {
