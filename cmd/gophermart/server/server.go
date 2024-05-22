@@ -112,7 +112,7 @@ func (s Server) getOrdersHandle(res http.ResponseWriter, req *http.Request) {
 		responseData = append(responseData, dto.ActualOrderStateResponse{
 			Number:     order.Number,
 			Status:     order.Status,
-			Accrual:    order.Accrual,
+			Accrual:    float64(order.Accrual) / 100,
 			UploadedAt: dto.JSONTime(order.UploadedAt),
 		})
 	}

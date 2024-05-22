@@ -27,7 +27,7 @@ type (
 	ActualOrderStateResponse struct {
 		Number     string   `json:"number"`
 		Status     string   `json:"status"`
-		Accrual    int      `json:"accrual,omitempty"`
+		Accrual    float64  `json:"accrual,omitempty"`
 		UploadedAt JSONTime `json:"uploaded_at"`
 	}
 
