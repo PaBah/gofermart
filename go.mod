@@ -1,6 +1,6 @@
 module github.com/PaBah/gofermart
 
-go 1.22.2
+go 1.21.10
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
