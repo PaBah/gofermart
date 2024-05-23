@@ -78,7 +78,7 @@ func (oac OrdersAccrualClient) GetOrder(number string) (order dto.AccrualOrderRe
 	case http.StatusInternalServerError:
 		return order, ErrAccrualServiceServerError
 	case http.StatusTooManyRequests:
-		resBody, err := io.ReadAll(req.Body)
+		resBody, err := io.ReadAll(res.Body)
 		if err != nil {
 			return order, ErrAccrualTooManyRequests
 		}
@@ -86,6 +86,7 @@ func (oac OrdersAccrualClient) GetOrder(number string) (order dto.AccrualOrderRe
 	case http.StatusNoContent:
 		return order, ErrAccrualNoData
 	}
+	defer res.Body.Close()
 
 	return
 }

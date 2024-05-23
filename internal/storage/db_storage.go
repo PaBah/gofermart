@@ -54,6 +54,7 @@ func (ds *DBStorage) CreateUser(ctx context.Context, user models.User) (createdU
 	var pgErr *pgconn.PgError
 	if errors.As(DBerr, &pgErr) && pgErr.Code == pgerrcode.UniqueViolation {
 		err = ErrAlreadyExists
+		return
 	}
 
 	return ds.AuthorizeUser(ctx, user.Login)
