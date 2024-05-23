@@ -111,7 +111,7 @@ func (ds *DBStorage) GetUsersOrders(ctx context.Context) (orders []models.Order,
 	defer rows.Close()
 
 	orders = make([]models.Order, 0)
-	var accrual sql.NullInt64
+	var accrual sql.NullFloat64
 	var uploadedAt time.Time
 	var status, number string
 
@@ -123,7 +123,7 @@ func (ds *DBStorage) GetUsersOrders(ctx context.Context) (orders []models.Order,
 		orders = append(orders, models.Order{
 			Number:     number,
 			Status:     status,
-			Accrual:    int(accrual.Int64),
+			Accrual:    accrual.Float64,
 			UploadedAt: uploadedAt,
 		})
 	}
@@ -141,7 +141,7 @@ func (ds *DBStorage) GetUsersWithdrawals(ctx context.Context) (withdrawals []mod
 	defer rows.Close()
 
 	withdrawals = make([]models.Withdrawal, 0)
-	var sum sql.NullInt64
+	var sum sql.NullFloat64
 	var processedAt time.Time
 	var number string
 
@@ -152,7 +152,7 @@ func (ds *DBStorage) GetUsersWithdrawals(ctx context.Context) (withdrawals []mod
 		}
 		withdrawals = append(withdrawals, models.Withdrawal{
 			OrderNumber: number,
-			Sum:         int(sum.Int64),
+			Sum:         sum.Float64,
 			ProcessedAt: processedAt,
 		})
 	}
@@ -167,31 +167,31 @@ func (ds *DBStorage) CreateWithdrawal(ctx context.Context, withdrawal models.Wit
 	return
 }
 
-func (ds *DBStorage) GetUsersBalance(ctx context.Context) (balance int, err error) {
+func (ds *DBStorage) GetUsersBalance(ctx context.Context) (balance float64, err error) {
 	userID := ctx.Value(auth.ContextUserKey).(string)
 	row := ds.db.QueryRowContext(ctx, `SELECT SUM(accrual) FROM orders WHERE user_id=$1`, userID)
-	var nullBalance sql.NullInt64
+	var nullBalance sql.NullFloat64
 
 	err = row.Scan(&nullBalance)
 	if err != nil {
 		return
 	}
 
-	balance = int(nullBalance.Int64)
+	balance = nullBalance.Float64
 	return
 }
 
-func (ds *DBStorage) GetUsersWithdraw(ctx context.Context) (withdraw int, err error) {
+func (ds *DBStorage) GetUsersWithdraw(ctx context.Context) (withdraw float64, err error) {
 	userID := ctx.Value(auth.ContextUserKey).(string)
 	row := ds.db.QueryRowContext(ctx, `SELECT SUM(sum) FROM withdrawals WHERE user_id=$1`, userID)
-	var nullWithdraw sql.NullInt64
+	var nullWithdraw sql.NullFloat64
 
 	err = row.Scan(&nullWithdraw)
 	if err != nil {
 		return
 	}
 
-	withdraw = int(nullWithdraw.Int64)
+	withdraw = nullWithdraw.Float64
 	return
 }
 

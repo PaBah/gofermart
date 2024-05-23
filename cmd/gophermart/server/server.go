@@ -112,7 +112,7 @@ func (s Server) getOrdersHandle(res http.ResponseWriter, req *http.Request) {
 		responseData = append(responseData, dto.ActualOrderStateResponse{
 			Number:     order.Number,
 			Status:     order.Status,
-			Accrual:    float64(order.Accrual) / 100,
+			Accrual:    order.Accrual,
 			UploadedAt: dto.JSONTime(order.UploadedAt),
 		})
 	}
@@ -180,8 +180,8 @@ func (s Server) getBalanceHandle(res http.ResponseWriter, req *http.Request) {
 	}
 
 	responseData := dto.UserBalanceResponse{
-		Current:   float64(balance-withdraw) / 100,
-		Withdrawn: float64(withdraw) / 100,
+		Current:   balance - withdraw,
+		Withdrawn: withdraw,
 	}
 
 	res.Header().Set("Content-Type", "application/json")
@@ -237,12 +237,12 @@ func (s Server) withdrawFundsHandle(res http.ResponseWriter, req *http.Request) 
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	if balance-withdraw < int(requestData.Sum*100) {
+	if balance-withdraw < requestData.Sum {
 		http.Error(res, "Not enough funds", http.StatusPaymentRequired)
 		return
 	}
 
-	withdrawal := models.Withdrawal{OrderNumber: requestData.Number, Sum: int(requestData.Sum * 100)}
+	withdrawal := models.Withdrawal{OrderNumber: requestData.Number, Sum: requestData.Sum}
 	_, err = s.storage.CreateWithdrawal(req.Context(), withdrawal)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
@@ -266,7 +266,7 @@ func (s Server) getUsersWithdrawalsHandle(res http.ResponseWriter, req *http.Req
 	for _, withdrawal := range withdrawals {
 		responseData = append(responseData, dto.WithdrawalsResponse{
 			OrderNumber: withdrawal.OrderNumber,
-			Sum:         float64(withdrawal.Sum) / 100,
+			Sum:         withdrawal.Sum,
 			ProcessedAt: dto.JSONTime(withdrawal.ProcessedAt),
 		})
 	}

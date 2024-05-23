@@ -13,6 +13,7 @@ import (
 	"github.com/PaBah/gofermart/internal/logger"
 	"github.com/PaBah/gofermart/internal/models"
 	"github.com/PaBah/gofermart/internal/storage"
+	"go.uber.org/zap"
 )
 
 type OrdersAccrualClient struct {
@@ -35,7 +36,7 @@ func (oac OrdersAccrualClient) ScrapeOrders() {
 				order, err := oac.GetOrder(orderID)
 				if err == nil {
 					orderInstance := models.Order{
-						Accrual: int(order.Accrual * 100),
+						Accrual: order.Accrual,
 						Number:  order.Order,
 					}
 					if order.Status == "REGISTERED" {
@@ -43,7 +44,10 @@ func (oac OrdersAccrualClient) ScrapeOrders() {
 					} else {
 						orderInstance.Status = order.Status
 					}
-					oac.storage.UpdateOrder(context.Background(), orderInstance)
+					_, err = oac.storage.UpdateOrder(context.Background(), orderInstance)
+					if err != nil {
+						logger.Log().Error("can not update order number="+order.Order, zap.Error(err))
+					}
 				}
 			}
 		}

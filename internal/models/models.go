@@ -16,13 +16,13 @@ type Order struct {
 	Number     string    `json:"number"`
 	UserID     string    `json:"-"`
 	Status     string    `json:"status"`
-	Accrual    int       `json:"accrual"`
+	Accrual    float64   `json:"accrual"`
 	UploadedAt time.Time `json:"uploaded_at"`
 }
 
 type Withdrawal struct {
 	OrderNumber string    `json:"order"`
-	Sum         int       `json:"sum"`
+	Sum         float64   `json:"sum"`
 	ProcessedAt time.Time `json:"processed_at"`
 }
 
