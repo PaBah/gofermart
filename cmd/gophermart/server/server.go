@@ -118,12 +118,7 @@ func (s Server) getOrdersHandle(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	response, err := json.Marshal(responseData)
-
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	response, _ := json.Marshal(responseData)
 
 	res.WriteHeader(http.StatusOK)
 	_, err = res.Write(response)
