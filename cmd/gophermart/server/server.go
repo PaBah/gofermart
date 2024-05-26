@@ -155,16 +155,8 @@ func (s Server) createOrderHandle(res http.ResponseWriter, req *http.Request) {
 }
 
 func (s Server) getBalanceHandle(res http.ResponseWriter, req *http.Request) {
-	balance, err := s.storage.GetUsersBalance(req.Context())
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	withdraw, err := s.storage.GetUsersWithdraw(req.Context())
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	balance, _ := s.storage.GetUsersBalance(req.Context())
+	withdraw, _ := s.storage.GetUsersWithdraw(req.Context())
 
 	responseData := dto.UserBalanceResponse{
 		Current:   balance - withdraw,
@@ -175,7 +167,7 @@ func (s Server) getBalanceHandle(res http.ResponseWriter, req *http.Request) {
 	response, _ := json.Marshal(responseData)
 
 	res.WriteHeader(http.StatusOK)
-	_, err = res.Write(response)
+	_, err := res.Write(response)
 	if err != nil {
 		logger.Log().Error("Can not send response from GET /api/user/balance", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
@@ -209,16 +201,9 @@ func (s Server) withdrawFundsHandle(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	balance, err := s.storage.GetUsersBalance(req.Context())
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	withdraw, err := s.storage.GetUsersWithdraw(req.Context())
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	balance, _ := s.storage.GetUsersBalance(req.Context())
+	withdraw, _ := s.storage.GetUsersWithdraw(req.Context())
+
 	if balance-withdraw < requestData.Sum {
 		http.Error(res, "Not enough funds", http.StatusPaymentRequired)
 		return
@@ -234,10 +219,6 @@ func (s Server) withdrawFundsHandle(res http.ResponseWriter, req *http.Request) 
 
 func (s Server) getUsersWithdrawalsHandle(res http.ResponseWriter, req *http.Request) {
 	withdrawals, err := s.storage.GetUsersWithdrawals(req.Context())
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
 
 	if len(withdrawals) == 0 {
 		res.WriteHeader(http.StatusNoContent)
@@ -254,12 +235,7 @@ func (s Server) getUsersWithdrawalsHandle(res http.ResponseWriter, req *http.Req
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	response, err := json.Marshal(responseData)
-
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	response, _ := json.Marshal(responseData)
 
 	res.WriteHeader(http.StatusOK)
 	_, err = res.Write(response)
@@ -278,7 +254,6 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 		storage: *storage,
 	}
 	r.Use(logger.LoggerMiddleware)
-	//r.Use(middleware.Logger)
 	r.Use(middleware.NewCompressor(flate.DefaultCompression).Handler)
 
 	r.Group(func(r chi.Router) {
@@ -293,10 +268,5 @@ func NewRouter(options *config.Options, storage *storage.Repository) *chi.Mux {
 		r.Post("/api/user/balance/withdraw", s.withdrawFundsHandle)
 		r.Get("/api/user/withdrawals", s.getUsersWithdrawalsHandle)
 	})
-	r.MethodNotAllowed(
-		func(writer http.ResponseWriter, request *http.Request) {
-			writer.WriteHeader(http.StatusBadRequest)
-		},
-	)
 	return r
 }

@@ -29,8 +29,15 @@ func TestServer(t *testing.T) {
 		expectedBody string
 		storage      storage.Repository
 	}{
+		//Registration
 		{method: http.MethodPost, contentType: "application/json", path: "/api/user/register", requestBody: `{"login":"test","password":"test"}`, expectedCode: http.StatusOK},
-		{method: http.MethodPost, contentType: "application/json", path: "/api/user/login", requestBody: `{"login":"test","password":"test"}`, expectedCode: http.StatusUnauthorized},
+		{method: http.MethodPost, contentType: "application/json", path: "/api/user/register", requestBody: `{"login":"test","password":"test12"}`, expectedCode: http.StatusConflict},
+		{method: http.MethodPost, path: "/api/user/register", requestBody: `{"login":"test","password":"test"}`, expectedCode: http.StatusBadRequest},
+		//Login
+		{method: http.MethodPost, contentType: "application/json", path: "/api/user/login", requestBody: `{"login":"test","password":"test"}`, expectedCode: http.StatusOK},
+		{method: http.MethodPost, path: "/api/user/login", requestBody: `{"login":"test","password":"test"}`, expectedCode: http.StatusBadRequest},
+		{method: http.MethodPost, contentType: "application/json", path: "/api/user/login", requestBody: `{"login": test","password":"test"}`, expectedCode: http.StatusBadRequest},
+		{method: http.MethodPost, contentType: "application/json", path: "/api/user/login", requestBody: `{"login": "test","password":"not_test"}`, expectedCode: http.StatusUnauthorized},
 		//Order Registration
 		{method: http.MethodPost, path: "/api/user/orders", contentType: "text/plain", userID: "test", requestBody: "3081279352", expectedCode: http.StatusOK},
 		{method: http.MethodPost, path: "/api/user/orders", contentType: "text/plain", userID: "test", requestBody: "12345678903", expectedCode: http.StatusAccepted},
@@ -46,10 +53,17 @@ func TestServer(t *testing.T) {
 		//Get Balance
 		{method: http.MethodGet, path: "/api/user/balance", contentType: "application/json", userID: "test", expectedCode: http.StatusOK, expectedBody: `{"current":500.5,"withdrawn":42}`},
 		{method: http.MethodGet, path: "/api/user/balance", contentType: "application/json", expectedCode: http.StatusUnauthorized},
-		//{method: http.MethodGet, path: "/api/user/balance", contentType: "application/json", userID: "test", expectedCode: http.StatusOK, expectedBody: `{"current":500.5,"withdrawn":42}`},
-
+		//Withdraw funds
 		{method: http.MethodPost, path: "/api/user/balance/withdraw", contentType: "application/json", userID: "test", requestBody: `{"order": "2377225624","sum":123}`, expectedCode: http.StatusOK},
+		{method: http.MethodPost, path: "/api/user/balance/withdraw", contentType: "application/json", requestBody: `{"order": "2377225624","sum":123}`, expectedCode: http.StatusUnauthorized},
+		{method: http.MethodPost, path: "/api/user/balance/withdraw", contentType: "application/json", userID: "test", requestBody: `{"order": 2377225624","sum":1231}`, expectedCode: http.StatusBadRequest},
+		{method: http.MethodPost, path: "/api/user/balance/withdraw", userID: "test", requestBody: `{"order": 2377225624","sum":1231}`, expectedCode: http.StatusBadRequest},
+		{method: http.MethodPost, path: "/api/user/balance/withdraw", contentType: "application/json", userID: "test", requestBody: `{"order": "2377225624","sum":1231}`, expectedCode: http.StatusPaymentRequired},
+		{method: http.MethodPost, path: "/api/user/balance/withdraw", contentType: "application/json", userID: "test", requestBody: `{"order": "4","sum":1231}`, expectedCode: http.StatusUnprocessableEntity},
+		//List Withdrawals
 		{method: http.MethodGet, path: "/api/user/withdrawals", contentType: "application/json", userID: "test", expectedCode: http.StatusOK, expectedBody: `[{"order":"2377225624","sum":123,"processed_at":"2020-12-09T16:09:57+03:00"}]`},
+		{method: http.MethodGet, path: "/api/user/withdrawals", contentType: "application/json", userID: "test2", expectedCode: http.StatusNoContent},
+		{method: http.MethodGet, path: "/api/user/withdrawals", contentType: "application/json", expectedCode: http.StatusUnauthorized},
 	}
 
 	options := &config.Options{
@@ -69,11 +83,16 @@ func TestServer(t *testing.T) {
 		EXPECT().
 		CreateUser(gomock.Any(), gomock.Any()).
 		Return(models.User{ID: "test", Login: "test", Password: "test"}, nil).
-		AnyTimes()
+		Times(1)
+	rm.
+		EXPECT().
+		CreateUser(gomock.Any(), gomock.Any()).
+		Return(models.User{ID: "test", Login: "test", Password: "test"}, storage.ErrAlreadyExists).
+		Times(1)
 	rm.
 		EXPECT().
 		AuthorizeUser(gomock.Any(), gomock.Any()).
-		Return(models.User{ID: "test", Login: "test", Password: "test"}, nil).
+		Return(models.NewUser("test", "test"), nil).
 		AnyTimes()
 	rm.
 		EXPECT().
@@ -124,7 +143,12 @@ func TestServer(t *testing.T) {
 		EXPECT().
 		GetUsersWithdrawals(gomock.Any()).
 		Return([]models.Withdrawal{models.Withdrawal{OrderNumber: "2377225624", Sum: 123, ProcessedAt: processedAt}}, nil).
-		AnyTimes()
+		Times(1)
+	rm.
+		EXPECT().
+		GetUsersWithdrawals(gomock.Any()).
+		Return([]models.Withdrawal{}, nil).
+		Times(1)
 
 	sh := NewRouter(options, &store)
 
