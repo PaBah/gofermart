@@ -218,7 +218,7 @@ func (s Server) withdrawFundsHandle(res http.ResponseWriter, req *http.Request) 
 }
 
 func (s Server) getUsersWithdrawalsHandle(res http.ResponseWriter, req *http.Request) {
-	withdrawals, err := s.storage.GetUsersWithdrawals(req.Context())
+	withdrawals, _ := s.storage.GetUsersWithdrawals(req.Context())
 
 	if len(withdrawals) == 0 {
 		res.WriteHeader(http.StatusNoContent)
@@ -238,7 +238,7 @@ func (s Server) getUsersWithdrawalsHandle(res http.ResponseWriter, req *http.Req
 	response, _ := json.Marshal(responseData)
 
 	res.WriteHeader(http.StatusOK)
-	_, err = res.Write(response)
+	_, err := res.Write(response)
 	if err != nil {
 		logger.Log().Error("Can not send response from GET /api/user/withdrawals", zap.Error(err))
 		http.Error(res, err.Error(), http.StatusInternalServerError)
