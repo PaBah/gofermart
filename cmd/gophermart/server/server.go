@@ -113,7 +113,12 @@ func (s Server) getOrdersHandle(res http.ResponseWriter, req *http.Request) {
 	response, _ := json.Marshal(responseData)
 
 	res.WriteHeader(http.StatusOK)
-	res.Write(response)
+	_, err = res.Write(response)
+	if err != nil {
+		logger.Log().Error("Can not send response from GET /api/user/orders", zap.Error(err))
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (s Server) createOrderHandle(res http.ResponseWriter, req *http.Request) {
