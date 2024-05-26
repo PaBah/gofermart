@@ -19,7 +19,6 @@ import (
 
 func TestServer(t *testing.T) {
 	// описываем набор данных: метод запроса, ожидаемый код ответа, ожидаемое тело
-	const body = ``
 	testCases := []struct {
 		method       string
 		requestBody  string
@@ -44,8 +43,11 @@ func TestServer(t *testing.T) {
 		{method: http.MethodGet, path: "/api/user/orders", contentType: "application/json", userID: "test2", expectedCode: http.StatusNoContent},
 		{method: http.MethodGet, path: "/api/user/orders", contentType: "application/json", expectedCode: http.StatusUnauthorized},
 		{method: http.MethodGet, path: "/api/user/orders", contentType: "application/json", userID: "test", expectedCode: http.StatusInternalServerError},
-
+		//Get Balance
 		{method: http.MethodGet, path: "/api/user/balance", contentType: "application/json", userID: "test", expectedCode: http.StatusOK, expectedBody: `{"current":500.5,"withdrawn":42}`},
+		{method: http.MethodGet, path: "/api/user/balance", contentType: "application/json", expectedCode: http.StatusUnauthorized},
+		//{method: http.MethodGet, path: "/api/user/balance", contentType: "application/json", userID: "test", expectedCode: http.StatusOK, expectedBody: `{"current":500.5,"withdrawn":42}`},
+
 		{method: http.MethodPost, path: "/api/user/balance/withdraw", contentType: "application/json", userID: "test", requestBody: `{"order": "2377225624","sum":123}`, expectedCode: http.StatusOK},
 		{method: http.MethodGet, path: "/api/user/withdrawals", contentType: "application/json", userID: "test", expectedCode: http.StatusOK, expectedBody: `[{"order":"2377225624","sum":123,"processed_at":"2020-12-09T16:09:57+03:00"}]`},
 	}

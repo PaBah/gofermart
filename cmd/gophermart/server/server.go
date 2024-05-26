@@ -38,11 +38,7 @@ func (s Server) registerUserHandle(res http.ResponseWriter, req *http.Request) {
 	}
 
 	requestData := &dto.RegisterUserRequest{}
-	err = json.Unmarshal(body, requestData)
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusBadRequest)
-		return
-	}
+	_ = json.Unmarshal(body, requestData)
 	user := models.NewUser(requestData.Login, requestData.Password)
 	createdUser, err := s.storage.CreateUser(req.Context(), user)
 
@@ -67,14 +63,10 @@ func (s Server) loginUserHandle(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, err := io.ReadAll(req.Body)
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	body, _ := io.ReadAll(req.Body)
 
 	requestData := &dto.LoginUserRequest{}
-	err = json.Unmarshal(body, requestData)
+	err := json.Unmarshal(body, requestData)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
@@ -121,12 +113,7 @@ func (s Server) getOrdersHandle(res http.ResponseWriter, req *http.Request) {
 	response, _ := json.Marshal(responseData)
 
 	res.WriteHeader(http.StatusOK)
-	_, err = res.Write(response)
-	if err != nil {
-		logger.Log().Error("Can not send response from GET /api/user/orders", zap.Error(err))
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	res.Write(response)
 }
 
 func (s Server) createOrderHandle(res http.ResponseWriter, req *http.Request) {
@@ -180,12 +167,7 @@ func (s Server) getBalanceHandle(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	response, err := json.Marshal(responseData)
-
-	if err != nil {
-		http.Error(res, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	response, _ := json.Marshal(responseData)
 
 	res.WriteHeader(http.StatusOK)
 	_, err = res.Write(response)
