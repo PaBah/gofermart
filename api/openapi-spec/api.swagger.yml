@@ -12,3 +12,255 @@ components:
       in: cookie
       name: Authorization
 paths:
+  /api/user/register:
+    post:
+      summary: Create user and set user's Authorization Cookie
+      description: Receive login password, register and authorize user
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                  example: login
+                password:
+                  type: string
+                  example: password
+      responses:
+        '200':
+          description: User successfully created
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: Authorization=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTQzNDAyMzAsIlVzZXJJRCI6IjQ4YzAxMzI2LTA3OWUtNDA5Mi1hOTAzLWI5OTRhNWI2MmIyMSJ9.rCSqGK2mHfplQesPYh6y5NDkE-ZjGvXOj9CKiBusy7U; Path=/
+        '400':
+          description: Invalid request format
+        '409':
+          description: User with such login already exists
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Can not set connection to DB
+  /api/user/login:
+    post:
+      summary: Authorize user
+      description: Check login password, and set Authorization Cookie for user
+      security: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                login:
+                  type: string
+                  example: login
+                password:
+                  type: string
+                  example: password
+      responses:
+        '200':
+          description: User successfully authorized
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: Authorization=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MTQzNDAyMzAsIlVzZXJJRCI6IjQ4YzAxMzI2LTA3OWUtNDA5Mi1hOTAzLWI5OTRhNWI2MmIyMSJ9.rCSqGK2mHfplQesPYh6y5NDkE-ZjGvXOj9CKiBusy7U; Path=/
+        '400':
+          description: Invalid request format
+        '401':
+          description: Invalid login+password pair
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Can not set connection to DB
+  /api/user/orders:
+    get:
+      summary: List user's order
+      description: Return user's order list
+      security:
+        - cookieAuth: [ ]
+      responses:
+        '200':
+          description: User already provided the order number
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    number:
+                      type: string
+                      example: "9278923470"
+                    status:
+                      type: string
+                      enum:
+                        - NEW
+                        - PROCESSING
+                        - INVALID
+                        - PROCESSED
+                      example: PROCESSED
+                    accrual:
+                      type: number
+                      example: 500
+                    uploaded_at:
+                      type: string
+                      example: "2020-12-10T15:15:45+03:00"
+        '204':
+          description: No data
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Can not set connection to DB
+    post:
+      summary: Register new user's order
+      description: Store user's order and track it's status
+      security:
+        - cookieAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: 12345678903
+      responses:
+        '200':
+          description: User already provided the order number
+        '202':
+          description: Order number successfully accepted for processing
+        '400':
+          description: Invalid request format
+        '401':
+          description: Unauthorized
+        '409':
+          description: Order number already stored
+        '422':
+          description: Order number has invalid format
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Can not set connection to DB
+  /api/user/balance:
+    get:
+      summary: Returns user's balance
+      description: Return user's available funds amount and already withdrawn
+      security:
+        - cookieAuth: [ ]
+      responses:
+        '200':
+          description: User's balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  current:
+                    type: number
+                    example: 500.5
+                  withdrawn:
+                    type: number
+                    example: 42
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Can not set connection to DB
+  /api/user/balance/withdraw:
+    post:
+      summary: Pay for provided order with gophermart
+      description: Pay provided sum for provided order number
+      security:
+        - cookieAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                order:
+                  type: string
+                  example: 2377225624
+                sum:
+                  type: number
+                  example: 6.9
+      responses:
+        '200':
+          description: Withdraw accepted successfully
+        '400':
+          description: Invalid request format
+        '401':
+          description: Unauthorized
+        '402':
+          description: Not enough fund
+        '422':
+          description: Order number has invalid format
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Can not set connection to DB
+  /api/user/withdrawals:
+    get:
+      summary: Returns user's withdrawals history
+      description: Return all user's withdrawal sorted from newest to oldest ones
+      security:
+        - cookieAuth: [ ]
+      responses:
+        '200':
+          description: User's withdrawals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    order:
+                      type: string
+                      example: 2377225624
+                    sum:
+                      type: number
+                      example: 500.5
+                    processed_at:
+                      type: string
+                      example: "2020-12-09T16:09:57+03:00"
+        '204':
+          description: User have never spent gophermart's points
+        '401':
+          description: Unauthorized
+        '500':
+          description: Server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Can not set connection to DB
