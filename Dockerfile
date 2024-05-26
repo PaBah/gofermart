@@ -1,6 +1,6 @@
 FROM golang:alpine as builder
 
-# ENV GO111MODULE=on
+ENV GO111MODULE=on
 
 # Add Maintainer info
 LABEL maintainer="Paul Bahushevich <paul.bahushevich@gmail.com>"
@@ -19,10 +19,11 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy the source from the current directory to the working Directory inside the container
-COPY deployment .
+COPY . .
 
 # Build the Go app
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+#RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+RUN go build github.com/PaBah/gofermart/cmd/gophermart
 
 # Start a new stage from scratch
 FROM alpine:latest
@@ -31,11 +32,9 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage. Observe we also copied the .env file
-COPY --from=builder /app/main .
-COPY --from=builder /app/.env .
+COPY --from=builder /app/gophermart .
 
-# Expose port 8080 to the outside world
-EXPOSE 8080
+EXPOSE 8081
 
 #Command to run the executable
-CMD ["./main"]
+ENTRYPOINT ["/root/gophermart", "-d", "host=postgres_db user=postgres password=postgres dbname=postgres", "-r", "http://accrual_service:8080"]
