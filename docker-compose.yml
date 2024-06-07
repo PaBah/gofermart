@@ -1,0 +1,37 @@
+services:
+  app:
+    container_name: app
+    build: .
+    ports:
+      - '8081:8081'
+    restart: on-failure
+    volumes:
+      - api:/usr/src/app/
+    depends_on:
+       - postgres_db
+       - accrual_service
+
+  accrual_service:
+    container_name: accrual
+    build:
+      dockerfile: Dockerfile.accrual
+    ports:
+      - '8080:8080'
+
+  postgres_db:
+    image: postgres:latest
+    container_name: db_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      - DATABASE_HOST=${DB_HOST}
+    ports:
+      - '5432:5432'
+    volumes:
+      - database_postgres:/var/lib/postgresql/data
+
+volumes:
+  api:
+  database_postgres:
